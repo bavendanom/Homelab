@@ -1,0 +1,12 @@
+# Archivos con contraseñas y secretos (NUNCA subir a GitHub)
+.env
+**/.env
+
+# Datos persistentes de los contenedores
+**/data/
+
+# Archivos del sistema
+.DS_Store
+*.swp
+*.swo
+*~
