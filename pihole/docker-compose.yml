@@ -1,0 +1,55 @@
+# ============================================================
+#  Pi-hole — Bloqueador de anuncios a nivel DNS
+#  Raspberry Pi 3 B+ | RAM estimada: ~50 MB
+#
+#  Uso:
+#    cp .env.example .env
+#    nano .env                  # ajusta tu contraseña
+#    docker compose up -d       # arrancar
+#    docker compose logs -f     # ver logs en vivo
+#    docker compose down        # detener
+# ============================================================
+
+services:
+  pihole:
+    # Imagen oficial de Pi-hole (soporta ARM64)
+    image: pihole/pihole:latest
+    container_name: pihole
+
+    # --- Puertos ---
+    # 53: DNS (todo tu tráfico DNS pasa por aquí)
+    # 80: Panel web de administración
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+
+    # --- Variables de entorno ---
+    # Se cargan desde el archivo .env
+    environment:
+      # Zona horaria (importante para los logs)
+      TZ: ${TZ}
+      # Contraseña para el panel web (http://IP_DE_TU_PI/admin)
+      WEBPASSWORD: ${WEBPASSWORD}
+      # Servidores DNS upstream (a dónde Pi-hole reenvía las consultas)
+      # Cloudflare (1.1.1.1) y Google (8.8.8.8) por defecto
+      PIHOLE_DNS_: ${PIHOLE_DNS}
+      # Escuchar en todas las interfaces de red
+      DNSMASQ_LISTENING: all
+
+    # --- Volúmenes ---
+    # Guardan la configuración y listas de bloqueo de forma persistente.
+    # Si el contenedor se destruye, tus datos sobreviven.
+    volumes:
+      - ./data/etc-pihole:/etc/pihole
+      - ./data/etc-dnsmasq.d:/etc/dnsmasq.d
+
+    # --- Reinicio automático ---
+    # Se reinicia solo si se detuvo por error, no si tú lo paraste
+    restart: unless-stopped
+
+    # --- DNS interno del contenedor ---
+    # Evita un bucle: el contenedor usa su propio DNS + un respaldo
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
